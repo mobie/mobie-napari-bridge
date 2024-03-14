@@ -1,0 +1,57 @@
+name: mobie-napari-bridge
+display_name: MoBIE Bridge
+# use 'hidden' to remove plugin from napari hub search results
+visibility: public
+# see https://napari.org/stable/plugins/manifest.html for valid categories
+categories: ["Annotation", "Segmentation", "Acquisition"]
+contributions:
+  commands:
+    - id: mobie-napari-bridge.get_reader
+      python_name: mobie_napari_bridge._reader:napari_get_reader
+      title: Open data with MoBIE Bridge
+    - id: mobie-napari-bridge.write_multiple
+      python_name: mobie_napari_bridge._writer:write_multiple
+      title: Save multi-layer data with MoBIE Bridge
+    - id: mobie-napari-bridge.write_single_image
+      python_name: mobie_napari_bridge._writer:write_single_image
+      title: Save image data with MoBIE Bridge
+    - id: mobie-napari-bridge.make_sample_data
+      python_name: mobie_napari_bridge._sample_data:make_sample_data
+      title: Load sample data from MoBIE Bridge
+    - id: mobie-napari-bridge.make_container_widget
+      python_name: mobie_napari_bridge:ImageThreshold
+      title: Make threshold Container widget
+    - id: mobie-napari-bridge.make_magic_widget
+      python_name: mobie_napari_bridge:threshold_magic_widget
+      title: Make threshold magic widget
+    - id: mobie-napari-bridge.make_function_widget
+      python_name: mobie_napari_bridge:threshold_autogenerate_widget
+      title: Make threshold function widget
+    - id: mobie-napari-bridge.make_qwidget
+      python_name: mobie_napari_bridge:ExampleQWidget
+      title: Make example QWidget
+  readers:
+    - command: mobie-napari-bridge.get_reader
+      accepts_directories: false
+      filename_patterns: ['*.npy']
+  writers:
+    - command: mobie-napari-bridge.write_multiple
+      layer_types: ['image*','labels*']
+      filename_extensions: []
+    - command: mobie-napari-bridge.write_single_image
+      layer_types: ['image']
+      filename_extensions: ['.npy']
+  sample_data:
+    - command: mobie-napari-bridge.make_sample_data
+      display_name: MoBIE Bridge
+      key: unique_id.1
+  widgets:
+    - command: mobie-napari-bridge.make_container_widget
+      display_name: Container Threshold
+    - command: mobie-napari-bridge.make_magic_widget
+      display_name: Magic Threshold
+    - command: mobie-napari-bridge.make_function_widget
+      autogenerate: true
+      display_name: Autogenerate Threshold
+    - command: mobie-napari-bridge.make_qwidget
+      display_name: Example QWidget
