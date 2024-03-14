@@ -18,18 +18,12 @@ contributions:
     - id: mobie-napari-bridge.make_sample_data
       python_name: mobie_napari_bridge._sample_data:make_sample_data
       title: Load sample data from MoBIE Bridge
-    - id: mobie-napari-bridge.make_container_widget
-      python_name: mobie_napari_bridge:ImageThreshold
-      title: Make threshold Container widget
-    - id: mobie-napari-bridge.make_magic_widget
-      python_name: mobie_napari_bridge:threshold_magic_widget
-      title: Make threshold magic widget
-    - id: mobie-napari-bridge.make_function_widget
-      python_name: mobie_napari_bridge:threshold_autogenerate_widget
-      title: Make threshold function widget
     - id: mobie-napari-bridge.make_qwidget
       python_name: mobie_napari_bridge:ExampleQWidget
       title: Make example QWidget
+    - id: mobie-napari-bridge.make_tbwidget
+      python_name: mobie_napari_bridge:TestBrowse
+      title: Test Browse widget
   readers:
     - command: mobie-napari-bridge.get_reader
       accepts_directories: false
@@ -46,12 +40,7 @@ contributions:
       display_name: MoBIE Bridge
       key: unique_id.1
   widgets:
-    - command: mobie-napari-bridge.make_container_widget
-      display_name: Container Threshold
-    - command: mobie-napari-bridge.make_magic_widget
-      display_name: Magic Threshold
-    - command: mobie-napari-bridge.make_function_widget
-      autogenerate: true
-      display_name: Autogenerate Threshold
     - command: mobie-napari-bridge.make_qwidget
       display_name: Example QWidget
+    - command: mobie-napari-bridge.make_tbwidget
+      display_name: TestBrowse QWidget
