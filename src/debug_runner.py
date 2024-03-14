@@ -16,16 +16,16 @@ def get_widgetname():
             with open(os.path.join(os.getcwd(), "src", module, "napari.yaml")) as f:
                 mod_settings = yaml.safe_load(f)
 
-        for cmd in mod_settings['contributions']['commands']:
-            if selection not in cmd['python_name']:
-                continue
-            else:
-                w_id = cmd['id']
-                for widget in mod_settings['contributions']['widgets']:
-                    if w_id not in widget['command']:
-                        continue
-                    else:
-                        widget_name = widget['display_name']
+            for cmd in mod_settings['contributions']['commands']:
+                if selection not in cmd['python_name']:
+                    continue
+                else:
+                    w_id = cmd['id']
+                    for widget in mod_settings['contributions']['widgets']:
+                        if w_id not in widget['command']:
+                            continue
+                        else:
+                            widget_name = widget['display_name']
 
     return widget_name
 
