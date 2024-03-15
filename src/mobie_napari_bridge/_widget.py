@@ -52,6 +52,12 @@ class TestBrowse(QWidget):
         self.ds_dropdown.setVisible(False)
 
 
+        self.vg_caption = QLabel("Select view group:")
+        self.vg_caption.setVisible(False)
+        self.vg_dropdown = QComboBox()
+        self.vg_dropdown.currentTextChanged.connect(self._vg_select)
+        self.vg_dropdown.setVisible(False)
+
         self.v_caption = QLabel("Select view:")
         self.v_caption.setVisible(False)
         self.v_dropdown = QComboBox()
@@ -65,6 +71,8 @@ class TestBrowse(QWidget):
         self.layout().addWidget(self.loadproj_btn)
         self.layout().addWidget(self.ds_caption)
         self.layout().addWidget(self.ds_dropdown)
+        self.layout().addWidget(self.vg_caption)
+        self.layout().addWidget(self.vg_dropdown)
         self.layout().addWidget(self.v_caption)
         self.layout().addWidget(self.v_dropdown)
 
@@ -89,16 +97,45 @@ class TestBrowse(QWidget):
             self.ds_dropdown.addItems(self.datasets)
 
 
-
     def _ds_select(self, ds_name):
         import mobie.metadata as mm
 
         self.dataset = mm.dataset_metadata.read_dataset_metadata(os.path.join(self.project_root, ds_name))
 
-        self.views = list(self.dataset['views'].keys())
-        self.v_dropdown.show()
-        self.v_caption.show()
-        self.v_dropdown.clear()
-        self.v_dropdown.addItems(self.views)
+        self.allviews = dict()
+        self.view_groups = []
+        self.vg_dropdown.hide()
+        self.vg_caption.hide()
 
+        for viewname, view in self.dataset['views'].items():
+            if view['uiSelectionGroup'] not in self.view_groups:
+                self.view_groups.append(view['uiSelectionGroup'])
+                self.allviews[view['uiSelectionGroup']] = [viewname]
+            else:
+                self.allviews[view['uiSelectionGroup']].append([viewname])
+
+        if len(self.view_groups) != 1:
+            self.v_dropdown.hide()
+            self.v_caption.hide()
+
+            self.vg_dropdown.show()
+            self.vg_caption.show()
+            self.vg_dropdown.clear()
+            self.vg_dropdown.addItems(self.view_groups)
+
+        else:
+            self.views = list(self.dataset['views'].keys())
+
+            self.v_dropdown.show()
+            self.v_caption.show()
+            self.v_dropdown.clear()
+            self.v_dropdown.addItems(self.views)
+
+    def _vg_select(self, vg_name):
+            self.views = list(self.allviews[vg_name])
+
+            self.v_dropdown.show()
+            self.v_caption.show()
+            self.v_dropdown.clear()
+            self.v_dropdown.addItems(self.views)
 
