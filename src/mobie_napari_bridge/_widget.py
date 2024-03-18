@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from mobie_napari_bridge.util import is_mobie_project
 
 from qtpy.QtWidgets import (QFileDialog, QGridLayout, QHBoxLayout, QVBoxLayout, QLabel,
-                            QPushButton, QWidget, QComboBox, QMessageBox)
+                            QPushButton, QWidget, QListWidget, QComboBox, QMessageBox, QAbstractItemView)
 
 if TYPE_CHECKING:
     import napari
@@ -41,6 +41,8 @@ class TestBrowse(QWidget):
         self.datasets = []
         self.dataset = None
         self.views = []
+        self.sources = []
+        self.view = []
 
         self.loadproj_btn = QPushButton("Select MoBIE project Folder")
         self.loadproj_btn.clicked.connect(self._button_click)
@@ -51,7 +53,6 @@ class TestBrowse(QWidget):
         self.ds_dropdown.currentTextChanged.connect(self._ds_select)
         self.ds_dropdown.setVisible(False)
 
-
         self.vg_caption = QLabel("Select view group:")
         self.vg_caption.setVisible(False)
         self.vg_dropdown = QComboBox()
@@ -61,13 +62,23 @@ class TestBrowse(QWidget):
         self.v_caption = QLabel("Select view:")
         self.v_caption.setVisible(False)
         self.v_dropdown = QComboBox()
-        # self.v_dropdown.currentTextChanged.connect(self._ds_select)
+        self.v_dropdown.currentTextChanged.connect(self._v_select)
         self.v_dropdown.setVisible(False)
 
+        self.sl_caption = QLabel("Select source(s):")
+        self.sl_caption.setVisible(False)
+        self.source_list = QListWidget()
+        self.source_list.setSelectionMode(
+            QAbstractItemView.ExtendedSelection
+        )
+        self.source_list.setVisible(False)
+        self.source_btn = QPushButton("Load selected sources in napari")
+        self.loadproj_btn.clicked.connect(self._srcbtn_click)
+        self.source_btn.setVisible(False)
+
+
         self.setLayout(QVBoxLayout())
-        # self.setLayout(QGridLayout())
-        # self.layout().setColumnStretch(1, 4)
-        # self.layout().setColumnStretch(2, 1)
+
         self.layout().addWidget(self.loadproj_btn)
         self.layout().addWidget(self.ds_caption)
         self.layout().addWidget(self.ds_dropdown)
@@ -75,6 +86,9 @@ class TestBrowse(QWidget):
         self.layout().addWidget(self.vg_dropdown)
         self.layout().addWidget(self.v_caption)
         self.layout().addWidget(self.v_dropdown)
+        self.layout().addWidget(self.sl_caption)
+        self.layout().addWidget(self.source_list)
+        self.layout().addWidget(self.source_btn)
 
     def _button_click(self):
         import mobie.metadata as mm
@@ -96,7 +110,6 @@ class TestBrowse(QWidget):
             self.ds_dropdown.clear()
             self.ds_dropdown.addItems(self.datasets)
 
-
     def _ds_select(self, ds_name):
         import mobie.metadata as mm
 
@@ -106,6 +119,11 @@ class TestBrowse(QWidget):
         self.view_groups = []
         self.vg_dropdown.hide()
         self.vg_caption.hide()
+
+        if 'views' not in self.dataset.keys():
+            self.v_dropdown.hide()
+            self.v_caption.hide()
+            return
 
         for viewname, view in self.dataset['views'].items():
             if view['uiSelectionGroup'] not in self.view_groups:
@@ -142,3 +160,31 @@ class TestBrowse(QWidget):
         self.v_dropdown.clear()
         self.v_dropdown.addItems(self.views)
 
+    def _v_select(self, view_name):
+        if view_name not in self.dataset['views'].keys():
+            return
+
+        self.sources = []
+        self.view = self.dataset['views'][view_name]
+
+        for disp in  self.view['sourceDisplays']:
+            if 'imageDisplay' in disp.keys():
+                sources = disp['imageDisplay']['sources']
+
+            elif 'regionDisplay' in disp.keys():
+                sources = [item for entry in disp['regionDisplay']['sources'].values() for item in entry]
+
+            for source in sources:
+                if source not in self.sources:
+                    self.sources.append(source)
+
+        self.source_list.show()
+        self.sl_caption.show()
+        self.source_btn.show()
+
+        self.source_list.clear()
+        self.source_list.addItems(self.sources)
+
+
+    def _srcbtn_click(self):
+        pass
