@@ -112,7 +112,7 @@ class TestBrowse(QWidget):
                 self.view_groups.append(view['uiSelectionGroup'])
                 self.allviews[view['uiSelectionGroup']] = [viewname]
             else:
-                self.allviews[view['uiSelectionGroup']].append([viewname])
+                self.allviews[view['uiSelectionGroup']].append(viewname)
 
         if len(self.view_groups) != 1:
             self.v_dropdown.hide()
@@ -132,10 +132,13 @@ class TestBrowse(QWidget):
             self.v_dropdown.addItems(self.views)
 
     def _vg_select(self, vg_name):
-            self.views = list(self.allviews[vg_name])
+        if vg_name not in self.view_groups:
+            return
 
-            self.v_dropdown.show()
-            self.v_caption.show()
-            self.v_dropdown.clear()
-            self.v_dropdown.addItems(self.views)
+        self.views = list(self.allviews[vg_name])
+
+        self.v_dropdown.show()
+        self.v_caption.show()
+        self.v_dropdown.clear()
+        self.v_dropdown.addItems(self.views)
 
