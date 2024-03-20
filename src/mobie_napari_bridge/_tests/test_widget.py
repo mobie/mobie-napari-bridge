@@ -2,7 +2,7 @@ import numpy as np
 
 from mobie_napari_bridge._widget import (
     ExampleQWidget,
-    TestBrowse
+    LoadSource
 )
 
 
@@ -29,7 +29,7 @@ def test_browse_q_widget(make_napari_viewer, capsys):
     viewer.add_image(np.random.random((100, 100)))
 
     # create our widget, passing in the viewer
-    my_widget = TestBrowse(viewer)
+    my_widget = LoadSource(viewer)
 
     # call our widget method
     my_widget._button_click()

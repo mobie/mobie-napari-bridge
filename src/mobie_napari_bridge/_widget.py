@@ -31,7 +31,7 @@ class ExampleQWidget(QWidget):
         print("napari has", len(self.viewer.layers), "layers")
 
 
-class TestBrowse(QWidget):
+class LoadSource(QWidget):
     # your QWidget.__init__ can optionally request the napari viewer instance
     # use a type annotation of 'napari.viewer.Viewer' for any parameter
 
@@ -223,7 +223,7 @@ class TestBrowse(QWidget):
                     no_zarr = QMessageBox()
                     no_zarr.setText("Import only possible for OME-Zarr sources.")
                     no_zarr.exec()
-                    raise ValueError('Wrong image format!')
+                    # raise ValueError('Wrong image format!')
 
                 if self.remote_checkbox.isChecked():
                     if 'ome.zarr.s3' in im_links.keys():
