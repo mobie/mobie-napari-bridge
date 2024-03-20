@@ -7,8 +7,8 @@ categories: ["Annotation", "Segmentation"]
 contributions:
   commands:
     - id: mobie-napari-bridge.load_source
-      python_name: mobie_napari_bridge:TestBrowse
-      title: Test Browse widget
+      python_name: mobie_napari_bridge:LoadSource
+      title: Load MoBIE Source(s)
   widgets:
     - command: mobie-napari-bridge.load_source
-      display_name: Load Source 
+      display_name: Load MoBIE Source(s)

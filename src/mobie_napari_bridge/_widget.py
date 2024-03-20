@@ -3,6 +3,7 @@
 """
 import os
 import copy
+import requests
 
 from typing import TYPE_CHECKING
 from mobie_napari_bridge.util import is_mobie_project, s3link
@@ -181,6 +182,12 @@ class LoadSource(QWidget):
             elif 'regionDisplay' in disp.keys():
                 sources = [item for entry in disp['regionDisplay']['sources'].values() for item in entry]
 
+            elif 'segmentationDisplay' in disp.keys():
+                sources = disp['segmentationDisplay']['sources']
+
+            else:
+                sources = []
+
             for source in sources:
                 if source not in self.sources:
                     self.sources.append(source)
@@ -193,7 +200,6 @@ class LoadSource(QWidget):
 
         self.source_list.clear()
         self.source_list.addItems(self.sources)
-
 
     def _srcbtn_click(self):
         sel_source_items = self.source_list.selectedItems()
@@ -223,22 +229,32 @@ class LoadSource(QWidget):
                     no_zarr = QMessageBox()
                     no_zarr.setText("Import only possible for OME-Zarr sources.")
                     no_zarr.exec()
+                    continue
                     # raise ValueError('Wrong image format!')
 
                 if self.remote_checkbox.isChecked():
                     if 'ome.zarr.s3' in im_links.keys():
-                        imlink = s3link(im_links['ome.zarr.s3'])
+                        if requests.get(s3link(link) + '/.zattrs').ok:
+                            imlink = s3link(im_links['ome.zarr.s3'])
                 else:
                     if 'ome.zarr' in im_links.keys():
-                        imlink = os.path.join(self.project_root, self.ds_name,
-                                              im_links['ome.zarr']['relativePath'])
+                        zpath = os.path.join(self.project_root, self.ds_name, im_links['ome.zarr']['relativePath'])
+                        if os.path.exists(zpath):
+                            imlink = zpath
 
-                if imlink == '':
-                    sel = list(im_links.items())[0]
-                    if sel[0] == 'ome.zarr':
-                        imlink = os.path.join(self.project_root, self.ds_name,
-                                              im_links['ome.zarr']['relativePath'])
-                    elif sel[0] == 'ome.zarr.s3':
-                        imlink = s3link(im_links['ome.zarr.s3'])
+                idx = 0
+                while imlink == '' and idx < len(im_links.keys()):
 
-                self.viewer.open(imlink, plugin="napari-ome-zarr", name=thissource, contrast_limits=[1000, 20000])
+                    link_type, link = list(im_links.items())[idx]
+                    if link_type == 'ome.zarr':
+                        zpath = os.path.join(self.project_root, self.ds_name, link['relativePath'])
+                        if os.path.exists(zpath):
+                            imlink = zpath
+                    elif link_type == 'ome.zarr.s3':
+                        if requests.get(s3link(link) + '/.zattrs').ok:
+                            imlink = s3link(link)
+
+                    idx += 1
+
+                if imlink != '':
+                    self.viewer.open(imlink, plugin="napari-ome-zarr", name=thissource, contrast_limits=[1000, 20000])
