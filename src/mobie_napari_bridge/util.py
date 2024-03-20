@@ -29,3 +29,8 @@ def is_mobie_project(path: os.PathLike) -> (bool, str):
 
     return False, ''
 
+
+def s3link(indict):
+    url = indict['s3Address']
+    return url
+

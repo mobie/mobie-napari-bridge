@@ -2,11 +2,12 @@
 
 """
 import os
+import copy
 
 from typing import TYPE_CHECKING
-from mobie_napari_bridge.util import is_mobie_project
+from mobie_napari_bridge.util import is_mobie_project, s3link
 
-from qtpy.QtWidgets import (QFileDialog, QGridLayout, QHBoxLayout, QVBoxLayout, QLabel,
+from qtpy.QtWidgets import (QFileDialog, QGridLayout, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox,
                             QPushButton, QWidget, QListWidget, QComboBox, QMessageBox, QAbstractItemView)
 
 if TYPE_CHECKING:
@@ -40,6 +41,7 @@ class TestBrowse(QWidget):
         self.project_root = None
         self.datasets = []
         self.dataset = None
+        self.ds_name = ''
         self.views = []
         self.sources = []
         self.view = []
@@ -73,8 +75,11 @@ class TestBrowse(QWidget):
         )
         self.source_list.setVisible(False)
         self.source_btn = QPushButton("Load selected sources in napari")
-        self.loadproj_btn.clicked.connect(self._srcbtn_click)
+        self.source_btn.clicked.connect(self._srcbtn_click)
         self.source_btn.setVisible(False)
+
+        self.remote_checkbox = QCheckBox('Prefer remote data if available')
+        self.remote_checkbox.setVisible(False)
 
 
         self.setLayout(QVBoxLayout())
@@ -89,6 +94,7 @@ class TestBrowse(QWidget):
         self.layout().addWidget(self.sl_caption)
         self.layout().addWidget(self.source_list)
         self.layout().addWidget(self.source_btn)
+        self.layout().addWidget(self.remote_checkbox)
 
     def _button_click(self):
         import mobie.metadata as mm
@@ -114,6 +120,7 @@ class TestBrowse(QWidget):
         import mobie.metadata as mm
 
         self.dataset = mm.dataset_metadata.read_dataset_metadata(os.path.join(self.project_root, ds_name))
+        self.ds_name = ds_name
 
         self.allviews = dict()
         self.view_groups = []
@@ -180,11 +187,58 @@ class TestBrowse(QWidget):
 
         self.source_list.show()
         self.sl_caption.show()
+
         self.source_btn.show()
+        self.remote_checkbox.show()
 
         self.source_list.clear()
         self.source_list.addItems(self.sources)
 
 
     def _srcbtn_click(self):
-        pass
+        sel_source_items = self.source_list.selectedItems()
+
+        if len(sel_source_items) < 1:
+            no_src = QMessageBox()
+            no_src.setText("No source(s) selected.")
+            no_src.exec()
+            return
+
+        sel_sources = []
+        self.mobie_imported_dataset = copy.deepcopy(self.dataset)
+
+        for item in sel_source_items:
+            thissource = item.text()
+            sel_sources.append(thissource)
+
+            if thissource not in self.dataset['sources'].keys():
+                raise ValueError('Wrong dataset!')
+
+            s_meta = self.dataset['sources'][thissource]
+
+            if 'image' in s_meta.keys():
+                im_links = s_meta['image']['imageData']
+                imlink = ''
+                if 'ome.zarr.s3' not in im_links.keys() and 'ome.zarr' not in im_links.keys():
+                    no_zarr = QMessageBox()
+                    no_zarr.setText("Import only possible for OME-Zarr sources.")
+                    no_zarr.exec()
+                    raise ValueError('Wrong image format!')
+
+                if self.remote_checkbox.isChecked():
+                    if 'ome.zarr.s3' in im_links.keys():
+                        imlink = s3link(im_links['ome.zarr.s3'])
+                else:
+                    if 'ome.zarr' in im_links.keys():
+                        imlink = os.path.join(self.project_root, self.ds_name,
+                                              im_links['ome.zarr']['relativePath'])
+
+                if imlink == '':
+                    sel = list(im_links.items())[0]
+                    if sel[0] == 'ome.zarr':
+                        imlink = os.path.join(self.project_root, self.ds_name,
+                                              im_links['ome.zarr']['relativePath'])
+                    elif sel[0] == 'ome.zarr.s3':
+                        imlink = s3link(im_links['ome.zarr.s3'])
+
+                self.viewer.open(imlink, plugin="napari-ome-zarr", name=thissource, contrast_limits=[1000, 20000])
