@@ -3,10 +3,9 @@
 """
 import os
 import copy
-import requests
 
 from typing import TYPE_CHECKING
-from mobie_napari_bridge.util import is_mobie_project, s3link
+from mobie_napari_bridge.util import is_mobie_project, check_image_source
 
 from qtpy.QtWidgets import (QFileDialog, QGridLayout, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox,
                             QPushButton, QWidget, QListWidget, QComboBox, QMessageBox, QAbstractItemView)
@@ -221,10 +220,11 @@ class LoadSource(QWidget):
                 raise ValueError('Wrong dataset!')
 
             s_meta = self.dataset['sources'][thissource]
+            ds_path = os.path.join(self.project_root, self.ds_name)
 
             if 'image' in s_meta.keys():
                 im_links = s_meta['image']['imageData']
-                imlink = ''
+
                 if 'ome.zarr.s3' not in im_links.keys() and 'ome.zarr' not in im_links.keys():
                     no_zarr = QMessageBox()
                     no_zarr.setText("Import only possible for OME-Zarr sources.")
@@ -233,28 +233,17 @@ class LoadSource(QWidget):
                     # raise ValueError('Wrong image format!')
 
                 if self.remote_checkbox.isChecked():
-                    if 'ome.zarr.s3' in im_links.keys():
-                        if requests.get(s3link(link) + '/.zattrs').ok:
-                            imlink = s3link(im_links['ome.zarr.s3'])
+                    imlink = check_image_source('ome.zarr.s3', im_links, ds_path)
                 else:
-                    if 'ome.zarr' in im_links.keys():
-                        zpath = os.path.join(self.project_root, self.ds_name, im_links['ome.zarr']['relativePath'])
-                        if os.path.exists(zpath):
-                            imlink = zpath
+                    imlink = check_image_source('ome.zarr', im_links, ds_path)
 
+                # loop through all possible source paths if preferred one is not found
                 idx = 0
-                while imlink == '' and idx < len(im_links.keys()):
+                while imlink is None and idx < len(im_links.keys()):
 
-                    link_type, link = list(im_links.items())[idx]
-                    if link_type == 'ome.zarr':
-                        zpath = os.path.join(self.project_root, self.ds_name, link['relativePath'])
-                        if os.path.exists(zpath):
-                            imlink = zpath
-                    elif link_type == 'ome.zarr.s3':
-                        if requests.get(s3link(link) + '/.zattrs').ok:
-                            imlink = s3link(link)
-
+                    link_type = list(im_links.keys())[idx]
+                    imlink = check_image_source(link_type, im_links, ds_path)
                     idx += 1
 
-                if imlink != '':
+                if imlink is not None:
                     self.viewer.open(imlink, plugin="napari-ome-zarr", name=thissource, contrast_limits=[1000, 20000])
