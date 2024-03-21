@@ -115,8 +115,9 @@ def check_image_source(src_type, im_metadata, ds_path):
             return s3link(im_metadata[src_type])
 
     elif src_type == 'ome.zarr':
-        zpath = os.path.join(ds_path, im_metadata[src_type]['relativePath'])
-        if os.path.exists(zpath):
+        zpath = os.path.join(ds_path,
+                             im_metadata[src_type]['relativePath'].lstrip('./').replace('/', os.pathsep))
+        if os.path.exists(zpath) and os.path.exists(os.path.join(zpath, '.zattrs')):
             return zpath
 
     else:
