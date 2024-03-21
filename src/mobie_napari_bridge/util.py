@@ -20,9 +20,25 @@ class MoBIEState(object):
         self.view = []
         self.allviews = dict()
         self.view_groups = []
+        self.displays = []
+        self.display = []
 
     def to_napari_layer_metadata(self):
-        return {}
+        return {
+            "project_root": self.project_root,
+            "dataset": self.imported_dataset,
+            "ds_name": self.ds_name,
+            "view": self.view,
+            "display": self.display
+        }
+
+    def update_napari_image_layer(self, layer):
+        if 'imageDisplay' in self.display.keys():
+            disp = self.display['imageDisplay']
+            layer.contrast_limits = disp['contrastLimits']
+            layer.opacity = disp['opacity']
+            layer.visible = disp['visible']
+
 
 
 def is_mobie_project(path: os.PathLike) -> (bool, str):

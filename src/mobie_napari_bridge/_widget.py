@@ -166,6 +166,7 @@ class LoadSource(QWidget):
             return
 
         self.mobie.sources = []
+        self.mobie.displays = []
         self.mobie.view = self.mobie.dataset['views'][view_name]
 
         for disp in self.mobie.view['sourceDisplays']:
@@ -184,6 +185,8 @@ class LoadSource(QWidget):
             for source in sources:
                 if source not in self.mobie.sources:
                     self.mobie.sources.append(source)
+                    self.mobie.displays.append(disp)
+
 
         self.source_list.show()
         self.sl_caption.show()
@@ -195,7 +198,7 @@ class LoadSource(QWidget):
         self.source_list.addItems(self.mobie.sources)
 
     def _srcbtn_click(self):
-        sel_source_items = self.source_list.selectedItems()
+        sel_source_items = self.source_list.selectedIndexes()
 
         if len(sel_source_items) < 1:
             no_src = QMessageBox()
@@ -207,7 +210,9 @@ class LoadSource(QWidget):
         self.mobie.imported_dataset = copy.deepcopy(self.mobie.dataset)
 
         for item in sel_source_items:
-            thissource = item.text()
+            thissource = item.data()
+            thisdisp = self.mobie.displays[item.row()]
+
             sel_sources.append(thissource)
 
             if thissource not in self.mobie.dataset['sources'].keys():
@@ -239,4 +244,9 @@ class LoadSource(QWidget):
                     idx += 1
 
                 if imlink is not None:
-                    self.viewer.open(imlink, plugin="napari-ome-zarr", name=thissource, contrast_limits=[1000, 20000])
+                    self.mobie.display = thisdisp
+                    self.viewer.open(imlink, plugin="napari-ome-zarr",
+                                     name=thissource,
+                                     metadata=self.mobie.to_napari_layer_metadata())
+                    self.mobie.update_napari_image_layer(self.viewer.layers[thissource])
+
