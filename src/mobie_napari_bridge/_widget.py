@@ -7,7 +7,7 @@ import copy
 from typing import TYPE_CHECKING
 from mobie_napari_bridge.util import is_mobie_project, check_image_source, MoBIEState
 
-from qtpy.QtWidgets import (QFileDialog, QGridLayout, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox,
+from qtpy.QtWidgets import (QFileDialog, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox,
                             QPushButton, QWidget, QListWidget, QComboBox, QMessageBox, QAbstractItemView)
 
 if TYPE_CHECKING:
@@ -95,8 +95,7 @@ class LoadSource(QWidget):
         dlg1 = QFileDialog()
         self.mobie.project_root = dlg1.getExistingDirectory(None)
 
-        isproject, subpath = is_mobie_project(self.mobie.project_root)
-        self.mobie.project_root = os.path.join(self.mobie.project_root, subpath)
+        isproject, self.mobie.project_root = is_mobie_project(self.mobie.project_root)
 
         if not isproject:
             no_proj = QMessageBox()

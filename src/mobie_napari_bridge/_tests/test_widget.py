@@ -26,7 +26,6 @@ def test_example_q_widget(make_napari_viewer, capsys):
 def test_browse_q_widget(make_napari_viewer, capsys):
     # make viewer and add an image layer using our fixture
     viewer = make_napari_viewer()
-    viewer.add_image(np.random.random((100, 100)))
 
     # create our widget, passing in the viewer
     my_widget = LoadSource(viewer)
@@ -34,6 +33,5 @@ def test_browse_q_widget(make_napari_viewer, capsys):
     # call our widget method
     my_widget._button_click()
 
-    # read captured output and check that it's as we expected
-    captured = capsys.readouterr()
+
 
