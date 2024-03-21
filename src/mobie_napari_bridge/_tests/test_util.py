@@ -1,5 +1,6 @@
 import os
 import pytest
+import numpy as np
 
 from mobie_napari_bridge.util import is_mobie_project, s3link, check_image_source, MoBIEState
 
@@ -53,3 +54,43 @@ def test_check_image_source(tmp_path):
         f.write('{}')
 
     assert check_image_source('ome.zarr', local_metadata, tmp_path) == zpath
+
+
+def test_mobiestate_to_napari_layer_metadata():
+    mstate = MoBIEState()
+    mstate.project_root = 'root'
+
+    assert mstate.to_napari_layer_metadata() == {"MoBIE": {
+            "project_root": 'root',
+            "dataset": None,
+            "ds_name": '',
+            "view": {},
+            "display": {}
+        }
+        }
+
+
+def test_mobiestate_update_napari_image_layer(make_napari_viewer):
+    mstate = MoBIEState()
+    viewer = make_napari_viewer()
+    viewer.add_image(np.random.random((100, 100)), name = 'testimage')
+
+    mstate.display['imageDisplay'] = {'contrastLimits': [0, 255.],
+                                      'opacity': 0.12345,
+                                      'visible': False}
+
+    # check contrast not being updated
+    old_contrast = viewer.layers['testimage'].contrast_limits
+
+    mstate.update_napari_image_layer(viewer.layers['testimage'])
+
+    assert old_contrast == viewer.layers['testimage'].contrast_limits
+
+    # check updated values
+    mstate.display['imageDisplay']['contrastLimits'] = [0.1, 3.4567]
+    mstate.update_napari_image_layer(viewer.layers['testimage'])
+
+    assert viewer.layers['testimage'].contrast_limits == mstate.display['imageDisplay']['contrastLimits']
+    assert viewer.layers['testimage'].opacity == mstate.display['imageDisplay']['opacity']
+    assert viewer.layers['testimage'].visible ==  mstate.display['imageDisplay']['visible']
+

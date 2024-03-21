@@ -18,11 +18,11 @@ class MoBIEState(object):
         self.ds_name = ''
         self.views = []
         self.sources = []
-        self.view = []
+        self.view = {}
         self.allviews = dict()
         self.view_groups = []
         self.displays = []
-        self.display = []
+        self.display = {}
 
     def to_napari_layer_metadata(self):
         """
