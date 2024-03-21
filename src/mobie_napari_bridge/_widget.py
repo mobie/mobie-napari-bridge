@@ -5,7 +5,7 @@ import os
 import copy
 
 from typing import TYPE_CHECKING
-from mobie_napari_bridge.util import is_mobie_project, check_image_source
+from mobie_napari_bridge.util import is_mobie_project, check_image_source, MoBIEState
 
 from qtpy.QtWidgets import (QFileDialog, QGridLayout, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox,
                             QPushButton, QWidget, QListWidget, QComboBox, QMessageBox, QAbstractItemView)
@@ -38,13 +38,7 @@ class LoadSource(QWidget):
     def __init__(self, viewer: "napari.viewer.Viewer"):
         super().__init__()
         self.viewer = viewer
-        self.project_root = None
-        self.datasets = []
-        self.dataset = None
-        self.ds_name = ''
-        self.views = []
-        self.sources = []
-        self.view = []
+        self.mobie = MoBIEState()
 
         self.loadproj_btn = QPushButton("Select MoBIE project Folder")
         self.loadproj_btn.clicked.connect(self._button_click)
@@ -81,7 +75,6 @@ class LoadSource(QWidget):
         self.remote_checkbox = QCheckBox('Prefer remote data if available')
         self.remote_checkbox.setVisible(False)
 
-
         self.setLayout(QVBoxLayout())
 
         self.layout().addWidget(self.loadproj_btn)
@@ -100,81 +93,82 @@ class LoadSource(QWidget):
         import mobie.metadata as mm
 
         dlg1 = QFileDialog()
-        self.project_root = dlg1.getExistingDirectory(None)
+        self.mobie.project_root = dlg1.getExistingDirectory(None)
 
-        isproject, subpath = is_mobie_project(self.project_root)
-        self.project_root = os.path.join(self.project_root, subpath)
+        isproject, subpath = is_mobie_project(self.mobie.project_root)
+        self.mobie.project_root = os.path.join(self.mobie.project_root, subpath)
 
         if not isproject:
             no_proj = QMessageBox()
             no_proj.setText("No MoBIE project found here.")
             no_proj.exec()
         else:
-            self.datasets = mm.get_datasets(self.project_root)
+            self.mobie.datasets = mm.get_datasets(self.mobie.project_root)
             self.ds_dropdown.show()
             self.ds_caption.show()
             self.ds_dropdown.clear()
-            self.ds_dropdown.addItems(self.datasets)
+            self.ds_dropdown.addItems(self.mobie.datasets)
 
     def _ds_select(self, ds_name):
         import mobie.metadata as mm
 
-        self.dataset = mm.dataset_metadata.read_dataset_metadata(os.path.join(self.project_root, ds_name))
-        self.ds_name = ds_name
+        self.mobie.dataset = mm.dataset_metadata.read_dataset_metadata(os.path.join(self.mobie.project_root, ds_name))
+        self.mobie.ds_name = ds_name
 
-        self.allviews = dict()
-        self.view_groups = []
+        self.mobie.allviews = dict()
+        self.mobie.view_groups = []
+
         self.vg_dropdown.hide()
         self.vg_caption.hide()
 
-        if 'views' not in self.dataset.keys():
+        if 'views' not in self.mobie.dataset.keys():
             self.v_dropdown.hide()
             self.v_caption.hide()
             return
 
-        for viewname, view in self.dataset['views'].items():
-            if view['uiSelectionGroup'] not in self.view_groups:
-                self.view_groups.append(view['uiSelectionGroup'])
-                self.allviews[view['uiSelectionGroup']] = [viewname]
+        for viewname, view in self.mobie.dataset['views'].items():
+            if view['uiSelectionGroup'] not in self.mobie.view_groups:
+                self.mobie.view_groups.append(view['uiSelectionGroup'])
+                self.mobie.allviews[view['uiSelectionGroup']] = [viewname]
             else:
-                self.allviews[view['uiSelectionGroup']].append(viewname)
+                self.mobie.allviews[view['uiSelectionGroup']].append(viewname)
 
-        if len(self.view_groups) != 1:
+        if len(self.mobie.view_groups) != 1:
             self.v_dropdown.hide()
             self.v_caption.hide()
 
             self.vg_dropdown.show()
             self.vg_caption.show()
             self.vg_dropdown.clear()
-            self.vg_dropdown.addItems(self.view_groups)
+            self.vg_dropdown.addItems(self.mobie.view_groups)
 
         else:
-            self.views = list(self.dataset['views'].keys())
+            self.mobie.views = list(self.mobie.dataset['views'].keys())
 
             self.v_dropdown.show()
             self.v_caption.show()
             self.v_dropdown.clear()
-            self.v_dropdown.addItems(self.views)
+            self.v_dropdown.addItems(self.mobie.views)
 
     def _vg_select(self, vg_name):
-        if vg_name not in self.view_groups:
+        if vg_name not in self.mobie.view_groups:
             return
 
-        self.views = list(self.allviews[vg_name])
+        self.mobie.views = list(self.mobie.allviews[vg_name])
 
         self.v_dropdown.show()
         self.v_caption.show()
         self.v_dropdown.clear()
-        self.v_dropdown.addItems(self.views)
+        self.v_dropdown.addItems(self.mobie.views)
 
     def _v_select(self, view_name):
-        if view_name not in self.dataset['views'].keys():
+        if view_name not in self.mobie.dataset['views'].keys():
             return
 
-        self.sources = []
-        self.view = self.dataset['views'][view_name]
+        self.mobie.sources = []
+        self.mobie.view = self.mobie.dataset['views'][view_name]
 
-        for disp in  self.view['sourceDisplays']:
+        for disp in self.mobie.view['sourceDisplays']:
             if 'imageDisplay' in disp.keys():
                 sources = disp['imageDisplay']['sources']
 
@@ -188,8 +182,8 @@ class LoadSource(QWidget):
                 sources = []
 
             for source in sources:
-                if source not in self.sources:
-                    self.sources.append(source)
+                if source not in self.mobie.sources:
+                    self.mobie.sources.append(source)
 
         self.source_list.show()
         self.sl_caption.show()
@@ -198,7 +192,7 @@ class LoadSource(QWidget):
         self.remote_checkbox.show()
 
         self.source_list.clear()
-        self.source_list.addItems(self.sources)
+        self.source_list.addItems(self.mobie.sources)
 
     def _srcbtn_click(self):
         sel_source_items = self.source_list.selectedItems()
@@ -210,17 +204,17 @@ class LoadSource(QWidget):
             return
 
         sel_sources = []
-        self.mobie_imported_dataset = copy.deepcopy(self.dataset)
+        self.mobie.imported_dataset = copy.deepcopy(self.mobie.dataset)
 
         for item in sel_source_items:
             thissource = item.text()
             sel_sources.append(thissource)
 
-            if thissource not in self.dataset['sources'].keys():
+            if thissource not in self.mobie.dataset['sources'].keys():
                 raise ValueError('Wrong dataset!')
 
-            s_meta = self.dataset['sources'][thissource]
-            ds_path = os.path.join(self.project_root, self.ds_name)
+            s_meta = self.mobie.dataset['sources'][thissource]
+            ds_path = os.path.join(self.mobie.project_root, self.mobie.ds_name)
 
             if 'image' in s_meta.keys():
                 im_links = s_meta['image']['imageData']
@@ -240,7 +234,6 @@ class LoadSource(QWidget):
                 # loop through all possible source paths if preferred one is not found
                 idx = 0
                 while imlink is None and idx < len(im_links.keys()):
-
                     link_type = list(im_links.keys())[idx]
                     imlink = check_image_source(link_type, im_links, ds_path)
                     idx += 1

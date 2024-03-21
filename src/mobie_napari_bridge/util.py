@@ -5,7 +5,24 @@ utility functions
 import os
 import requests
 
-# import mobie.metadata as mm
+
+# import metadata as mm
+
+class MoBIEState(object):
+    def __init__(self):
+        self.project_root = None
+        self.datasets = []
+        self.dataset = None
+        self.imported_dataset = None
+        self.ds_name = ''
+        self.views = []
+        self.sources = []
+        self.view = []
+        self.allviews = dict()
+        self.view_groups = []
+
+    def to_napari_layer_metadata(self):
+        return {}
 
 
 def is_mobie_project(path: os.PathLike) -> (bool, str):
@@ -35,6 +52,7 @@ def s3link(indict):
     url = indict['s3Address']
     return url
 
+
 def check_image_source(src_type, im_metadata, ds_path):
     if src_type not in im_metadata.keys():
         return None
@@ -42,7 +60,7 @@ def check_image_source(src_type, im_metadata, ds_path):
     if src_type == 'ome.zarr.s3':
         if requests.get(s3link(im_metadata[src_type]) + '/.zattrs').ok:
             return s3link(im_metadata[src_type])
-    
+
     elif src_type == 'ome.zarr':
         zpath = os.path.join(ds_path, im_metadata[src_type]['relativePath'])
         if os.path.exists(zpath):
