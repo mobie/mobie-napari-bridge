@@ -23,7 +23,7 @@ def test_example_q_widget(make_napari_viewer, capsys):
     assert captured.out == "napari has 1 layers\n"
 
 
-def test_browse_q_widget(make_napari_viewer, capsys):
+def test_loadsource(make_napari_viewer, capsys):
     # make viewer and add an image layer using our fixture
     viewer = make_napari_viewer()
 
