@@ -48,8 +48,10 @@ class MoBIEState(object):
             disp = self.display['imageDisplay']
             if disp['contrastLimits'] not in ([0, 255], [0, 65535]):
                 layer.contrast_limits = disp['contrastLimits']
-            layer.opacity = disp['opacity']
-            layer.visible = disp['visible']
+            if 'opacity' in disp.keys():
+                layer.opacity = disp['opacity']
+            if 'visible' in disp.keys():
+                layer.visible = disp['visible']
 
 
 def is_mobie_project(path):
@@ -88,7 +90,7 @@ def s3link(indict):
     str
     The full URL to the source for an S3 reader to open.
     """
-    url = indict['s3Address']
+    url = indict['s3Address'].rstrip('/')
     return url
 
 
@@ -111,8 +113,14 @@ def check_image_source(src_type, im_metadata, ds_path):
         return None
 
     if src_type == 'ome.zarr.s3':
-        if requests.get(s3link(im_metadata[src_type]) + '/.zattrs').ok:
-            return s3link(im_metadata[src_type])
+        try:
+            a = requests.get(s3link(im_metadata[src_type]) + '/.zattrs')
+            if a.ok:
+                return s3link(im_metadata[src_type])
+        except:
+            return None
+
+
 
     elif src_type == 'ome.zarr':
         zpath = os.path.join(ds_path,

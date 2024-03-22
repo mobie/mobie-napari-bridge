@@ -186,7 +186,6 @@ class LoadSource(QWidget):
                     self.mobie.sources.append(source)
                     self.mobie.displays.append(disp)
 
-
         self.source_list.show()
         self.sl_caption.show()
 
@@ -248,4 +247,3 @@ class LoadSource(QWidget):
                                      name=thissource,
                                      metadata=self.mobie.to_napari_layer_metadata())
                     self.mobie.update_napari_image_layer(self.viewer.layers[thissource])
-

@@ -35,7 +35,7 @@ def test_s3link():
     targetaddress = 'https://s3targetaddress/test/'
     gooddict = {'s3Address': targetaddress}
 
-    assert s3link(gooddict) == targetaddress
+    assert s3link(gooddict) == targetaddress.rstrip('/')
 
 
 def test_check_image_source(tmp_path):
@@ -55,25 +55,37 @@ def test_check_image_source(tmp_path):
 
     assert check_image_source('ome.zarr', local_metadata, tmp_path) == zpath
 
+    # test remote OME-Zarr
+    targetaddress = 'https://s3targetaddress/test/'
+    remote_metadata = {'ome.zarr.s3': {'s3Address': targetaddress}}
+    remote_metadata.update(local_metadata)
+
+    assert check_image_source('ome.zarr.s3', remote_metadata, tmp_path) is None
+
+    targetaddress = 'https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.1/6001240.zarr/'
+    remote_metadata['ome.zarr.s3']['s3Address'] = targetaddress
+
+    assert check_image_source('ome.zarr.s3', remote_metadata, tmp_path) == targetaddress.rstrip('/')
+
 
 def test_mobiestate_to_napari_layer_metadata():
     mstate = MoBIEState()
     mstate.project_root = 'root'
 
     assert mstate.to_napari_layer_metadata() == {"MoBIE": {
-            "project_root": 'root',
-            "dataset": None,
-            "ds_name": '',
-            "view": {},
-            "display": {}
-        }
-        }
+        "project_root": 'root',
+        "dataset": None,
+        "ds_name": '',
+        "view": {},
+        "display": {}
+    }
+    }
 
 
 def test_mobiestate_update_napari_image_layer(make_napari_viewer):
     mstate = MoBIEState()
     viewer = make_napari_viewer()
-    viewer.add_image(np.random.random((100, 100)), name = 'testimage')
+    viewer.add_image(np.random.random((100, 100)), name='testimage')
 
     mstate.display['imageDisplay'] = {'contrastLimits': [0, 255.],
                                       'opacity': 0.12345,
@@ -92,5 +104,4 @@ def test_mobiestate_update_napari_image_layer(make_napari_viewer):
 
     assert viewer.layers['testimage'].contrast_limits == mstate.display['imageDisplay']['contrastLimits']
     assert viewer.layers['testimage'].opacity == mstate.display['imageDisplay']['opacity']
-    assert viewer.layers['testimage'].visible ==  mstate.display['imageDisplay']['visible']
-
+    assert viewer.layers['testimage'].visible == mstate.display['imageDisplay']['visible']
