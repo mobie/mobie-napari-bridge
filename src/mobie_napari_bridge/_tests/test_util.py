@@ -2,7 +2,8 @@ import os
 import pytest
 import numpy as np
 
-from mobie_napari_bridge.util import is_mobie_project, s3link, check_image_source, MoBIEState
+from mobie_napari_bridge.util import (is_mobie_project, s3link, check_image_source,
+                                      MoBIEState, find_same_extent)
 
 
 def test_is_mobie_project(tmp_path):
@@ -105,3 +106,15 @@ def test_mobiestate_update_napari_image_layer(make_napari_viewer):
     assert viewer.layers['testimage'].contrast_limits == mstate.display['imageDisplay']['contrastLimits']
     assert viewer.layers['testimage'].opacity == mstate.display['imageDisplay']['opacity']
     assert viewer.layers['testimage'].visible == mstate.display['imageDisplay']['visible']
+
+def test_find_same_extent(make_napari_viewer):
+    viewer = make_napari_viewer()
+    viewer.add_image(np.random.random((100, 100)), name='t0_100')
+    viewer.add_image(np.random.random((100, 100)), name='t1_100')
+    viewer.add_image(np.random.random((100, 100)), name='target_100')
+    viewer.add_image(np.random.random((101, 101)), name='t0_101')
+
+    assert find_same_extent(viewer.layers, 'target_100') == ['t0_100', 't1_100']
+    assert find_same_extent(viewer.layers, 't0_101') == []
+    with pytest.raises(KeyError):
+        find_same_extent(viewer.layers, 'target_101')

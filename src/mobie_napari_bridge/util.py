@@ -4,6 +4,7 @@ utility functions to handle MoBIE projects in napari
 
 import os
 import requests
+import numpy as np
 
 
 class MoBIEState(object):
@@ -101,7 +102,7 @@ def check_image_source(src_type, im_metadata, ds_path):
     ----------
     src_type : str Source type specifier
     im_metadata : dict image source dictionary defining the links to original data
-    ds_path : str full path of the dataset (local file system).
+    ds_path : str Full path of the dataset (local file system).
 
     Returns
     -------
@@ -130,3 +131,28 @@ def check_image_source(src_type, im_metadata, ds_path):
 
     else:
         return None
+
+
+def find_same_extent(layers, target_name):
+    """
+
+    Parameters
+    ----------
+    layers : napari.viewer.Viewer.layers The napari viewer layers to screen.
+    target_name : str The layer name to find a match.
+
+    Returns
+    -------
+    list(str)
+    The matching layer(s) name(s).
+    """
+
+    extent = layers[target_name].extent
+    result = list()
+
+    for layer in layers:
+        if all([np.all(layer.extent[i] == extent[i]) for i in range(len(extent))]):
+            if layer.name != target_name:
+                result.append(layer.name)
+
+    return result
