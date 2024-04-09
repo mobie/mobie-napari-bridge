@@ -11,6 +11,7 @@ class MoBIEState(object):
     """
     Necessary metadata to actively work within a MoBIE project.
     """
+
     def __init__(self):
         self.project_root = None
         self.datasets = []
@@ -120,8 +121,6 @@ def check_image_source(src_type, im_metadata, ds_path):
                 return s3link(im_metadata[src_type])
         except:
             return None
-
-
 
     elif src_type == 'ome.zarr':
         zpath = os.path.join(ds_path,

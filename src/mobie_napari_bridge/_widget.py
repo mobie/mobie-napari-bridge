@@ -5,7 +5,7 @@ import os
 import copy
 
 from typing import TYPE_CHECKING
-from mobie_napari_bridge.util import is_mobie_project, check_image_source, MoBIEState
+from mobie_napari_bridge.util import is_mobie_project, check_image_source, MoBIEState, find_same_extent
 
 from qtpy.QtWidgets import (QFileDialog, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox,
                             QPushButton, QWidget, QListWidget, QComboBox, QMessageBox, QAbstractItemView)
@@ -68,12 +68,16 @@ class LoadSource(QWidget):
             QAbstractItemView.ExtendedSelection
         )
         self.source_list.setVisible(False)
-        self.source_btn = QPushButton("Load selected sources in napari")
+        self.source_btn = QPushButton("Load selected source(s) in napari")
         self.source_btn.clicked.connect(self._srcbtn_click)
         self.source_btn.setVisible(False)
 
         self.remote_checkbox = QCheckBox('Prefer remote data if available')
         self.remote_checkbox.setVisible(False)
+
+        self.add_btn = QPushButton("Add selected layer(s) to MoBIE project")
+        self.add_btn.clicked.connect(self._addbtn_click)
+        self.add_btn.setVisible(False)
 
         self.setLayout(QVBoxLayout())
 
@@ -88,6 +92,7 @@ class LoadSource(QWidget):
         self.layout().addWidget(self.source_list)
         self.layout().addWidget(self.source_btn)
         self.layout().addWidget(self.remote_checkbox)
+        self.layout().addWidget(self.add_btn)
 
     def _button_click(self):
         import mobie.metadata as mm
@@ -191,6 +196,7 @@ class LoadSource(QWidget):
 
         self.source_btn.show()
         self.remote_checkbox.show()
+        self.add_btn.show()
 
         self.source_list.clear()
         self.source_list.addItems(self.mobie.sources)
@@ -247,3 +253,30 @@ class LoadSource(QWidget):
                                      name=thissource,
                                      metadata=self.mobie.to_napari_layer_metadata())
                     self.mobie.update_napari_image_layer(self.viewer.layers[thissource])
+
+    def _addbtn_click(self):
+        if len(self.viewer.layers.selection) < 1:
+            no_layer = QMessageBox()
+            no_layer.setText("No layer(s) selected.")
+            no_layer.exec()
+            return
+
+        newlayers = list()
+
+        for layer in self.viewer.layers.selection:
+            if 'MoBIE' not in layer.metadata.keys():
+                p_layers = find_same_extent(self.viewer.layers, layer.name)
+
+                if len(p_layers) < 1:
+                    continue
+                else:
+                    layer.metadata['MoBIE'] = copy.deepcopy(self.viewer.layers[p_layers[0]].metadata['MoBIE'])
+                    newlayers.append(layer)
+
+
+
+        if len(newlayers) < 1:
+            no_nlayer = QMessageBox()
+            no_nlayer.setText("No new layer(s) selected or no parent imported MoBIE layers found.")
+            no_nlayer.exec()
+            return
