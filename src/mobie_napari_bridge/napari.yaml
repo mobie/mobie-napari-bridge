@@ -9,6 +9,11 @@ contributions:
     - id: mobie-napari-bridge.load_source
       python_name: mobie_napari_bridge:LoadSource
       title: Load MoBIE Source(s)
+    - id: mobie-napari-bridge.layer2mobie
+      python_name: mobie_napari_bridge:Layer2MoBIE
+      title: Add napari layer to MoBIE project
   widgets:
     - command: mobie-napari-bridge.load_source
       display_name: Load MoBIE Source(s)
+    - command: mobie-napari-bridge.layer2mobie
+      display_name: Add napari layer to MoBIE project

@@ -75,10 +75,6 @@ class LoadSource(QWidget):
         self.remote_checkbox = QCheckBox('Prefer remote data if available')
         self.remote_checkbox.setVisible(False)
 
-        self.add_btn = QPushButton("Add selected layer(s) to MoBIE project")
-        self.add_btn.clicked.connect(self._addbtn_click)
-        self.add_btn.setVisible(False)
-
         self.setLayout(QVBoxLayout())
 
         self.layout().addWidget(self.loadproj_btn)
@@ -92,7 +88,6 @@ class LoadSource(QWidget):
         self.layout().addWidget(self.source_list)
         self.layout().addWidget(self.source_btn)
         self.layout().addWidget(self.remote_checkbox)
-        self.layout().addWidget(self.add_btn)
 
     def _button_click(self):
         import mobie.metadata as mm
@@ -196,7 +191,6 @@ class LoadSource(QWidget):
 
         self.source_btn.show()
         self.remote_checkbox.show()
-        self.add_btn.show()
 
         self.source_list.clear()
         self.source_list.addItems(self.mobie.sources)
@@ -254,6 +248,19 @@ class LoadSource(QWidget):
                                      metadata=self.mobie.to_napari_layer_metadata())
                     self.mobie.update_napari_image_layer(self.viewer.layers[thissource])
 
+
+class Layer2MoBIE(QWidget):
+
+    def __init__(self, viewer: "napari.viewer.Viewer"):
+        super().__init__()
+        self.viewer = viewer
+
+        self.add_btn = QPushButton("Add selected layer(s) to MoBIE project")
+        self.add_btn.clicked.connect(self._addbtn_click)
+
+        self.setLayout(QVBoxLayout())
+        self.layout().addWidget(self.add_btn)
+
     def _addbtn_click(self):
         if len(self.viewer.layers.selection) < 1:
             no_layer = QMessageBox()
@@ -271,9 +278,9 @@ class LoadSource(QWidget):
                     continue
                 else:
                     layer.metadata['MoBIE'] = copy.deepcopy(self.viewer.layers[p_layers[0]].metadata['MoBIE'])
+
+
                     newlayers.append(layer)
-
-
 
         if len(newlayers) < 1:
             no_nlayer = QMessageBox()
