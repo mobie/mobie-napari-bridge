@@ -13,6 +13,8 @@ from qtpy.QtWidgets import (QFileDialog, QHBoxLayout, QVBoxLayout, QLabel, QChec
 if TYPE_CHECKING:
     import napari
 
+from napari import layers
+
 
 class ExampleQWidget(QWidget):
     # your QWidget.__init__ can optionally request the napari viewer instance
@@ -262,6 +264,8 @@ class Layer2MoBIE(QWidget):
         self.layout().addWidget(self.add_btn)
 
     def _addbtn_click(self):
+        import mobie.metadata as mm
+
         if len(self.viewer.layers.selection) < 1:
             no_layer = QMessageBox()
             no_layer.setText("No layer(s) selected.")
@@ -270,7 +274,7 @@ class Layer2MoBIE(QWidget):
 
         newlayers = list()
 
-        for layer in self.viewer.layers.selection:
+        for layer in list(self.viewer.layers.selection):
             if 'MoBIE' not in layer.metadata.keys():
                 p_layers = find_same_extent(self.viewer.layers, layer.name)
 
@@ -278,7 +282,18 @@ class Layer2MoBIE(QWidget):
                     continue
                 else:
                     layer.metadata['MoBIE'] = copy.deepcopy(self.viewer.layers[p_layers[0]].metadata['MoBIE'])
+                    view = layer.metadata['MoBIE']['view']
+                    ds_path = os.path.join(layer.metadata['MoBIE']['project_root'], layer.metadata['MoBIE']['ds_name'])
+                    if type(layer) is layers.labels.labels.Labels:
+                        mm.add_regions_to_dataset(ds_path, layer.name, layer.features) # WHY IS THE FEATURES EMPTY FOR PAINTED LAYERS?
 
+                    elif type(layer) is layers.image.image.Image:
+                        pass
+                    else:
+                        no_supplayer = QMessageBox()
+                        no_supplayer.setText("Layer " + layer.names + " not of supported type!")
+                        no_supplayer.exec()
+                        continue
 
                     newlayers.append(layer)
 
