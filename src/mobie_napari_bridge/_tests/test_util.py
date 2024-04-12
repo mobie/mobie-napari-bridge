@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 
 from mobie_napari_bridge.util import (is_mobie_project, s3link, check_image_source,
-                                      MoBIEState, find_same_extent)
+                                      MoBIEState, find_same_extent, tmpdir)
 
 
 def test_is_mobie_project(tmp_path):
@@ -15,16 +15,29 @@ def test_is_mobie_project(tmp_path):
         f.write('{}')
 
     # test non-existing path
-    assert is_mobie_project(os.path.join(tmp_path, 'thispathdoesnotexists')) == (False, '')
+    assert is_mobie_project(os.path.join(tmp_path, 'thispathdoesnotexists')) == (False, '', False)
 
     # test path without MoBIE project
-    assert is_mobie_project(tmp_path) == (False, '')
+    assert is_mobie_project(tmp_path) == (False, '', False)
 
     # test parent MoBIE path
-    assert is_mobie_project(os.path.join(tmp_path, 'testmobieproject')) == (True, targetpath)
+    assert is_mobie_project(os.path.join(tmp_path, 'testmobieproject')) == (True, targetpath, False)
 
     # test full path
-    assert is_mobie_project(targetpath) == (True, targetpath)
+    assert is_mobie_project(targetpath, remote=True) == (True, targetpath, True)
+
+    # test wrong github
+    assert is_mobie_project('github.com/notexistingrepository') == (False, '', False)
+
+    # test existing github but no MoBIE project
+    url = 'https://github.com/mobie/mobie.io'
+    assert is_mobie_project(url) == (False, '', False)
+
+    # test good github
+    url = 'https://github.com/mobie/clem-example-project'
+    localdir = os.path.join(tmpdir,'data')
+    assert is_mobie_project(url.lstrip('https://')) == (True, localdir, True)
+    assert is_mobie_project(url) == (True, localdir, True)
 
 
 def test_s3link():
@@ -106,6 +119,7 @@ def test_mobiestate_update_napari_image_layer(make_napari_viewer):
     assert viewer.layers['testimage'].contrast_limits == mstate.display['imageDisplay']['contrastLimits']
     assert viewer.layers['testimage'].opacity == mstate.display['imageDisplay']['opacity']
     assert viewer.layers['testimage'].visible == mstate.display['imageDisplay']['visible']
+
 
 def test_find_same_extent(make_napari_viewer):
     viewer = make_napari_viewer()

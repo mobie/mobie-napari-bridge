@@ -84,6 +84,9 @@ def is_mobie_project(path, remote=False):
         elif os.path.isdir(os.path.join(path, 'data')):
             if 'project.json' in os.listdir(os.path.join(path, 'data')):
                 return True, os.path.join(path, 'data'), remote
+        else:
+            return False, '', False
+
     elif 'github.com' in path:
         if path.startswith('https:'):
             repo_url = path
