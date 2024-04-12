@@ -5,7 +5,7 @@ utility functions to handle MoBIE projects in napari
 import os
 import requests
 import numpy as np
-
+from qtpy.QtWidgets import QMessageBox
 
 class MoBIEState(object):
     """
@@ -124,12 +124,35 @@ def check_image_source(src_type, im_metadata, ds_path):
 
     elif src_type == 'ome.zarr':
         zpath = os.path.join(ds_path,
-                             im_metadata[src_type]['relativePath'].lstrip('./').replace('/', os.pathsep))
+                             im_metadata[src_type]['relativePath'].lstrip('./').replace('/', os.path.sep))
         if os.path.exists(zpath) and os.path.exists(os.path.join(zpath, '.zattrs')):
             return zpath
 
     else:
         return None
+
+
+def get_link(im_links, ds_path, remote=False):
+    if 'ome.zarr.s3' not in im_links.keys() and 'ome.zarr' not in im_links.keys():
+        no_zarr = QMessageBox()
+        no_zarr.setText("Import only possible for OME-Zarr sources.")
+        no_zarr.exec()
+        return None
+        # raise ValueError('Wrong image format!')
+
+    if remote:
+        imlink = check_image_source('ome.zarr.s3', im_links, ds_path)
+    else:
+        imlink = check_image_source('ome.zarr', im_links, ds_path)
+
+    # loop through all possible source paths if preferred one is not found
+    idx = 0
+    while (imlink is None and idx < len(im_links.keys())):
+        link_type = list(im_links.keys())[idx]
+        imlink = check_image_source(link_type, im_links, ds_path)
+        idx += 1
+
+    return imlink
 
 
 def find_same_extent(layers, target_name):
@@ -155,3 +178,5 @@ def find_same_extent(layers, target_name):
                 result.append(layer.name)
 
     return result
+
+

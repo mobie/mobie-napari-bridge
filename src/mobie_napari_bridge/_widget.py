@@ -5,7 +5,7 @@ import os
 import copy
 
 from typing import TYPE_CHECKING
-from mobie_napari_bridge.util import is_mobie_project, check_image_source, MoBIEState, find_same_extent
+from mobie_napari_bridge.util import is_mobie_project, MoBIEState, find_same_extent, get_link
 
 from qtpy.QtWidgets import (QFileDialog, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox,
                             QPushButton, QWidget, QListWidget, QComboBox, QMessageBox, QAbstractItemView)
@@ -224,24 +224,7 @@ class LoadSource(QWidget):
             if 'image' in s_meta.keys():
                 im_links = s_meta['image']['imageData']
 
-                if 'ome.zarr.s3' not in im_links.keys() and 'ome.zarr' not in im_links.keys():
-                    no_zarr = QMessageBox()
-                    no_zarr.setText("Import only possible for OME-Zarr sources.")
-                    no_zarr.exec()
-                    continue
-                    # raise ValueError('Wrong image format!')
-
-                if self.remote_checkbox.isChecked():
-                    imlink = check_image_source('ome.zarr.s3', im_links, ds_path)
-                else:
-                    imlink = check_image_source('ome.zarr', im_links, ds_path)
-
-                # loop through all possible source paths if preferred one is not found
-                idx = 0
-                while imlink is None and idx < len(im_links.keys()):
-                    link_type = list(im_links.keys())[idx]
-                    imlink = check_image_source(link_type, im_links, ds_path)
-                    idx += 1
+                imlink = get_link(im_links, ds_path, remote=self.remote_checkbox.isChecked())
 
                 if imlink is not None:
                     self.mobie.display = thisdisp
@@ -250,6 +233,17 @@ class LoadSource(QWidget):
                                      metadata=self.mobie.to_napari_layer_metadata())
                     self.mobie.update_napari_image_layer(self.viewer.layers[thissource])
 
+            elif 'segmentation' in s_meta.keys():
+                im_links = s_meta['segmentation']['imageData']
+
+                imlink = get_link(im_links, ds_path, remote=self.remote_checkbox.isChecked())
+
+                if imlink is not None:
+                    self.mobie.display = thisdisp
+                    self.viewer.open(imlink, plugin="napari-ome-zarr",
+                                     name=thissource,
+                                     metadata=self.mobie.to_napari_layer_metadata(),
+                                     layer_type="labels")
 
 class Layer2MoBIE(QWidget):
 
