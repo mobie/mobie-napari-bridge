@@ -7,7 +7,7 @@ import copy
 from typing import TYPE_CHECKING
 from mobie_napari_bridge.util import is_mobie_project, MoBIEState, find_same_extent, get_link
 
-from qtpy.QtWidgets import (QFileDialog, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox,
+from qtpy.QtWidgets import (QFileDialog, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox, QInputDialog,
                             QPushButton, QWidget, QListWidget, QComboBox, QMessageBox, QAbstractItemView)
 
 if TYPE_CHECKING:
@@ -26,7 +26,10 @@ class LoadSource(QWidget):
         self.mobie = MoBIEState()
 
         self.loadproj_btn = QPushButton("Select MoBIE project Folder")
-        self.loadproj_btn.clicked.connect(self._button_click)
+        self.loadproj_btn.clicked.connect(self._project_folder_button_click)
+
+        self.remote_proj_btn = QPushButton("Select MoBIE repository")
+        self.remote_proj_btn.clicked.connect(self._remote_project_button_click)
 
         self.ds_caption = QLabel("Select dataset:")
         self.ds_caption.setVisible(False)
@@ -63,6 +66,7 @@ class LoadSource(QWidget):
         self.setLayout(QVBoxLayout())
 
         self.layout().addWidget(self.loadproj_btn)
+        self.layout().addWidget(self.remote_proj_btn)
         self.layout().addWidget(self.ds_caption)
         self.layout().addWidget(self.ds_dropdown)
         self.layout().addWidget(self.vg_caption)
@@ -74,13 +78,13 @@ class LoadSource(QWidget):
         self.layout().addWidget(self.source_btn)
         self.layout().addWidget(self.remote_checkbox)
 
-    def _button_click(self):
+    def _project_folder_button_click(self):
         import mobie.metadata as mm
 
         dlg1 = QFileDialog()
         self.mobie.project_root = dlg1.getExistingDirectory(None)
 
-        isproject, self.mobie.project_root = is_mobie_project(self.mobie.project_root)
+        isproject, self.mobie.project_root, __ = is_mobie_project(self.mobie.project_root)
 
         if not isproject:
             no_proj = QMessageBox()
@@ -92,6 +96,31 @@ class LoadSource(QWidget):
             self.ds_caption.show()
             self.ds_dropdown.clear()
             self.ds_dropdown.addItems(self.mobie.datasets)
+
+    def _remote_project_button_click(self):
+        import mobie.metadata as mm
+
+        dlg2 = QInputDialog()
+        inurl, ok = dlg2.getText(self, 'Text Input Dialog', 'Enter your name:')
+
+        if not ok:
+            return
+
+        isproject, self.mobie.project_root, isremote = is_mobie_project(inurl)
+
+        if not isproject:
+            no_proj = QMessageBox()
+            no_proj.setText("No MoBIE project found here.")
+            no_proj.exec()
+        else:
+            self.mobie.datasets = mm.get_datasets(self.mobie.project_root)
+            self.ds_dropdown.show()
+            self.ds_caption.show()
+            self.ds_dropdown.clear()
+            self.ds_dropdown.addItems(self.mobie.datasets)
+
+            if isremote:
+                self.mobie.remote_root = inurl
 
     def _ds_select(self, ds_name):
         import mobie.metadata as mm
@@ -207,7 +236,8 @@ class LoadSource(QWidget):
             if 'image' in s_meta.keys():
                 im_links = s_meta['image']['imageData']
 
-                imlink = get_link(im_links, ds_path, remote=self.remote_checkbox.isChecked())
+                imlink = get_link(im_links, ds_path, remote=any((self.remote_checkbox.isChecked(),
+                                                                 self.mobie.remote_root is not None)))
 
                 if imlink is not None:
                     self.mobie.display = thisdisp

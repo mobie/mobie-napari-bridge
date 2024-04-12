@@ -12,7 +12,7 @@ def test_loadsource(make_napari_viewer, capsys):
     my_widget = LoadSource(viewer)
 
     # call our widget method
-    my_widget._button_click()
+    my_widget._project_folder_button_click()
 
 
 

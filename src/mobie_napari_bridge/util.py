@@ -3,9 +3,14 @@ utility functions to handle MoBIE projects in napari
 """
 
 import os
+import shutil
 import requests
 import numpy as np
+from git import Repo
+
 from qtpy.QtWidgets import QMessageBox
+
+tmpdir = os.path.join(os.getcwd(), 'tmp_MoBIE_project')
 
 class MoBIEState(object):
     """
@@ -14,6 +19,7 @@ class MoBIEState(object):
 
     def __init__(self):
         self.project_root = None
+        self.remote_root = None
         self.datasets = []
         self.dataset = None
         self.imported_dataset = None
@@ -56,29 +62,48 @@ class MoBIEState(object):
                 layer.visible = disp['visible']
 
 
-def is_mobie_project(path):
+def is_mobie_project(path, remote=False):
     """
     Checks if a given path contains a MoBIE project. Can be at top level or in the `data` sub-folder.
 
     Parameters
     ----------
-    path : os.PathLike The path to check.
+    path : str The path/URL to check.
 
     Returns
     -------
-    (bool, str)
-    True if a MoBIE project structure is found and the complete path to the MoBIE project or if not: (False, '').
+    (bool, str, bool)
+    - True if a MoBIE project structure is found
+    - the complete path to the MoBIE project or if not: (False, '').
+    - True if remote repository
     """
 
     if os.path.isdir(path):
         if 'project.json' in os.listdir(path):
-            return True, path
+            return True, path, remote
         elif os.path.isdir(os.path.join(path, 'data')):
             if 'project.json' in os.listdir(os.path.join(path, 'data')):
-                return True, os.path.join(path, 'data')
+                return True, os.path.join(path, 'data'), remote
+    elif 'github.com' in path:
+        if path.startswith('https:'):
+            repo_url = path
+        elif path.startswith('github.com'):
+            repo_url = 'https://' + path
+        else:
+            return False, '', False
 
-    return False, ''
+        if os.path.exists(tmpdir):
+            shutil.rmtree(tmpdir)
 
+        try:
+            repo = Repo.clone_from(repo_url, tmpdir)
+        except:
+            return False, '', False
+
+        return is_mobie_project(tmpdir, remote=True)
+
+    else:
+        return False, '', False
 
 def s3link(indict):
     """
