@@ -133,6 +133,19 @@ def check_image_source(src_type, im_metadata, ds_path):
 
 
 def get_link(im_links, ds_path, remote=False):
+    """
+
+    Parameters
+    ----------
+    im_links : dict The MoBIE source dictionary
+    ds_path : str Path of dataset
+    remote : object Whether remote sources are preferred.
+
+    Returns
+    -------
+    object
+
+    """
     if 'ome.zarr.s3' not in im_links.keys() and 'ome.zarr' not in im_links.keys():
         no_zarr = QMessageBox()
         no_zarr.setText("Import only possible for OME-Zarr sources.")
