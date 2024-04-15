@@ -101,7 +101,7 @@ class LoadSource(QWidget):
         import mobie.metadata as mm
 
         dlg2 = QInputDialog()
-        inurl, ok = dlg2.getText(self, 'Text Input Dialog', 'Enter your name:')
+        inurl, ok = dlg2.getText(self, 'Open MoBIE repository', 'Repository URL:')
 
         if not ok:
             return
@@ -257,6 +257,7 @@ class LoadSource(QWidget):
                                      name=thissource,
                                      metadata=self.mobie.to_napari_layer_metadata(),
                                      layer_type="labels")
+                    pass
 
 class Layer2MoBIE(QWidget):
 

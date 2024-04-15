@@ -12,6 +12,7 @@ from qtpy.QtWidgets import QMessageBox
 
 tmpdir = os.path.join(os.getcwd(), 'tmp_MoBIE_project')
 
+
 class MoBIEState(object):
     """
     Necessary metadata to actively work within a MoBIE project.
@@ -69,6 +70,7 @@ def is_mobie_project(path, remote=False):
     Parameters
     ----------
     path : str The path/URL to check.
+    remote : bool whether the project resides on a remote (github)
 
     Returns
     -------
@@ -99,7 +101,7 @@ def is_mobie_project(path, remote=False):
             shutil.rmtree(tmpdir)
 
         try:
-            repo = Repo.clone_from(repo_url, tmpdir)
+            Repo.clone_from(repo_url, tmpdir,   depth=1, single_branch=True)
         except:
             return False, '', False
 
@@ -107,6 +109,7 @@ def is_mobie_project(path, remote=False):
 
     else:
         return False, '', False
+
 
 def s3link(indict):
     """
@@ -219,5 +222,3 @@ def find_same_extent(layers, target_name):
                 result.append(layer.name)
 
     return result
-
-
