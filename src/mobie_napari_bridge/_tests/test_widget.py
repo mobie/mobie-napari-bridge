@@ -3,7 +3,7 @@ import os
 from .testutils import create_test_project, datasets
 
 from mobie_napari_bridge._widget import (
-    QFileDialog, QMessageBox,
+    QFileDialog, QMessageBox, QInputDialog,
     LoadSource
 )
 
@@ -20,6 +20,11 @@ def test_loadsource(make_napari_viewer, capsys, monkeypatch, tmp_path):
     class MockQMessageBox(QMessageBox):
         def exec(self):
             print(self.text())
+
+    class MockQInputDialog(QInputDialog):
+        def getText(self, title, label):
+            return 'texttext', True
+
 
     # Monkeypatch the QFileDialog.exec_() method with our mock implementation
     monkeypatch.setattr(QFileDialog, 'exec_', MockQFileDialog.exec_)

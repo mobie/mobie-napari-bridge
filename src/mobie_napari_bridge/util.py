@@ -101,7 +101,7 @@ def is_mobie_project(path, remote=False):
             shutil.rmtree(tmpdir)
 
         try:
-            Repo.clone_from(repo_url, tmpdir,   depth=1, single_branch=True)
+            Repo.clone_from(repo_url + '.git', tmpdir,   depth=1, single_branch=True)
         except:
             return False, '', False
 
