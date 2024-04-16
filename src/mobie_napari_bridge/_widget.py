@@ -97,11 +97,14 @@ class LoadSource(QWidget):
             self.ds_dropdown.clear()
             self.ds_dropdown.addItems(self.mobie.datasets)
 
-    def _remote_project_button_click(self):
+    def _remote_project_button_click(self, test_url=None):
         import mobie.metadata as mm
 
         dlg2 = QInputDialog()
         inurl, ok = dlg2.getText(self, 'Open MoBIE repository', 'Repository URL:')
+
+        if test_url:
+            inurl = test_url
 
         if not ok:
             return

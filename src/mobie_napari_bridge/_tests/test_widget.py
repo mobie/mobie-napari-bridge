@@ -22,8 +22,9 @@ def test_loadsource(make_napari_viewer, capsys, monkeypatch, tmp_path):
             print(self.text())
 
     class MockQInputDialog(QInputDialog):
-        def getText(self, title, label):
-            return 'texttext', True
+        def getText(self, __, title, label):
+            print(label)
+            return label, True
 
 
     # Monkeypatch the QFileDialog.exec_() method with our mock implementation
@@ -31,6 +32,7 @@ def test_loadsource(make_napari_viewer, capsys, monkeypatch, tmp_path):
     monkeypatch.setattr(QFileDialog, 'getExistingDirectory', MockQFileDialog.getExistingDirectory)
 
     monkeypatch.setattr(QMessageBox, 'exec', MockQMessageBox.exec)
+    monkeypatch.setattr(QInputDialog, 'getText', MockQInputDialog.getText)
 
     # make viewer and add an image layer using our fixture
     viewer = make_napari_viewer()
@@ -70,5 +72,29 @@ def test_loadsource(make_napari_viewer, capsys, monkeypatch, tmp_path):
     #     --------------------------------------------------------------
     #     remote repository button
 
+    # reset visibility
+    my_widget.ds_dropdown.setVisible(False)
+    my_widget.ds_caption.setVisible(False)
 
+    my_widget._remote_project_button_click(test_url='wronglocation')
 
+    # read captured output and check that the DialogBox has appeared
+    captured = capsys.readouterr()
+
+    assert captured.out == 'Repository URL:\nNo MoBIE project found here.\n'
+
+    assert my_widget.ds_dropdown.isHidden()
+    assert my_widget.ds_caption.isHidden()
+
+    # clear MoBIE stdout and stderr
+    __ = capsys.readouterr()
+
+    my_widget._remote_project_button_click(test_url=str(tmp_path))
+
+    assert my_widget.ds_dropdown.isHidden() is False
+    assert my_widget.ds_caption.isHidden() is False
+    assert my_widget.mobie.datasets == datasets
+    assert my_widget.ds_dropdown.count() == len(datasets)
+
+    for idx, ds in enumerate(datasets):
+        assert my_widget.ds_dropdown.itemText(idx) == ds
