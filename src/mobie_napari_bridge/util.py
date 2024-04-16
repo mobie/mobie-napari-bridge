@@ -55,7 +55,7 @@ class MoBIEState(object):
     def update_napari_image_layer(self, layer):
         if 'imageDisplay' in self.display.keys():
             disp = self.display['imageDisplay']
-            if disp['contrastLimits'] not in ([0, 255]):
+            if disp['contrastLimits'] not in ([0, 255],):
                 layer.contrast_limits = disp['contrastLimits']
             if 'opacity' in disp.keys():
                 layer.opacity = disp['opacity']
