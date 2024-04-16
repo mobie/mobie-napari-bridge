@@ -137,7 +137,7 @@ class LoadSource(QWidget):
         self.vg_dropdown.hide()
         self.vg_caption.hide()
 
-        if 'views' not in self.mobie.dataset.keys():
+        if 'views' not in self.mobie.dataset.keys():  # pragma: no cover
             self.v_dropdown.hide()
             self.v_caption.hide()
             return
@@ -150,9 +150,6 @@ class LoadSource(QWidget):
                 self.mobie.allviews[view['uiSelectionGroup']].append(viewname)
 
         if len(self.mobie.view_groups) != 1:
-            self.v_dropdown.hide()
-            self.v_caption.hide()
-
             self.vg_dropdown.show()
             self.vg_caption.show()
             self.vg_dropdown.clear()
@@ -161,6 +158,8 @@ class LoadSource(QWidget):
         else:
             self.mobie.views = list(self.mobie.dataset['views'].keys())
 
+            self.vg_dropdown.hide()
+            self.vg_caption.hide()
             self.v_dropdown.show()
             self.v_caption.show()
             self.v_dropdown.clear()

@@ -98,3 +98,30 @@ def test_loadsource(make_napari_viewer, capsys, monkeypatch, tmp_path):
 
     for idx, ds in enumerate(datasets):
         assert my_widget.ds_dropdown.itemText(idx) == ds
+
+    #     --------------------------------------------------------------
+    #     select dataset
+
+    assert my_widget.ds_dropdown.currentText() == 'ds1'
+    my_widget.ds_dropdown.setCurrentIndex(1)
+    assert my_widget.ds_dropdown.currentText() == 'ds2'
+
+    assert my_widget.vg_dropdown.isHidden() is False
+    assert my_widget.vg_caption.isHidden() is False
+
+    assert my_widget.vg_dropdown.count() == 3  # default view in addition
+
+    for idx in range(2):
+        assert my_widget.vg_dropdown.itemText(idx+1) == 'menu_im' + str(idx+1)
+
+    newpath = str(tmp_path) + 'single_viewgroup'
+    create_test_project(newpath)
+    my_widget._remote_project_button_click(test_url=newpath)
+
+    assert my_widget.vg_dropdown.isHidden()
+    assert my_widget.vg_caption.isHidden()
+
+    assert my_widget.v_dropdown.count() == len(my_widget.mobie.views)
+
+
+
