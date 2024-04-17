@@ -261,6 +261,8 @@ class LoadSource(QWidget):
                                      layer_type="labels")
                     pass
 
+            self.mobie.imported_sources = sel_sources
+
 class Layer2MoBIE(QWidget):
 
     def __init__(self, viewer: "napari.viewer.Viewer"):

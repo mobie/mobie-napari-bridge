@@ -110,18 +110,43 @@ def test_loadsource(make_napari_viewer, capsys, monkeypatch, tmp_path):
     assert my_widget.vg_caption.isHidden() is False
 
     assert my_widget.vg_dropdown.count() == 3  # default view in addition
+    assert len(my_widget.mobie.allviews.keys()) == 3
+    assert my_widget.vg_dropdown.itemText(0) == 'bookmark'
+    assert 'bookmark' in my_widget.mobie.allviews.keys()
 
     for idx in range(2):
         assert my_widget.vg_dropdown.itemText(idx+1) == 'menu_im' + str(idx+1)
+        assert 'menu_im' + str(idx+1) in my_widget.mobie.allviews.keys()
 
-    newpath = str(tmp_path) + 'single_viewgroup'
-    create_test_project(newpath)
+    newpath = os.path.join(tmp_path, 'single_viewgroup')
+    create_test_project(newpath, single_view_group=True)
     my_widget._remote_project_button_click(test_url=newpath)
 
     assert my_widget.vg_dropdown.isHidden()
     assert my_widget.vg_caption.isHidden()
 
     assert my_widget.v_dropdown.count() == len(my_widget.mobie.views)
+
+
+    #     --------------------------------------------------------------
+    #     select view group
+
+    my_widget._remote_project_button_click(test_url=tmp_path)
+    my_widget.vg_dropdown.setCurrentIndex(1)
+
+    assert len(my_widget.mobie.views) == len(my_widget.mobie.allviews['menu_im1']) == my_widget.v_dropdown.count()
+
+    for idx, view in enumerate(my_widget.mobie.allviews['menu_im1']):
+        assert my_widget.v_dropdown.itemText(idx) == my_widget.mobie.views[idx] == view
+
+    #     --------------------------------------------------------------
+    #     select view
+
+    my_widget.v_dropdown.setCurrentIndex(0)
+    assert len(my_widget.mobie.sources) == my_widget.source_list.count()
+
+    for idx, source in enumerate(my_widget.mobie.sources):
+        assert my_widget.source_list.item(idx) == source
 
 
 

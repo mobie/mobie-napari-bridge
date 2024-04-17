@@ -24,6 +24,7 @@ class MoBIEState(object):
         self.datasets = []
         self.dataset = None
         self.imported_dataset = None
+        self.imported_sources = None
         self.ds_name = ''
         self.views = []
         self.sources = []
