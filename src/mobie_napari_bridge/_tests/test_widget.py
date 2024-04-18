@@ -1,6 +1,8 @@
 import numpy as np
 import os
-from .testutils import create_test_project, datasets
+from .testutils import create_test_project, datasets, im_shape
+
+from napari import layers
 
 from mobie_napari_bridge._widget import (
     QFileDialog, QMessageBox, QInputDialog,
@@ -143,10 +145,42 @@ def test_loadsource(make_napari_viewer, capsys, monkeypatch, tmp_path):
     #     select view
 
     my_widget.v_dropdown.setCurrentIndex(0)
+    assert my_widget.mobie.view == my_widget.mobie.dataset['views'][my_widget.v_dropdown.currentText()]
     assert len(my_widget.mobie.sources) == my_widget.source_list.count()
 
     for idx, source in enumerate(my_widget.mobie.sources):
-        assert my_widget.source_list.item(idx) == source
+        assert my_widget.source_list.item(idx).text() == source
+
+    #     --------------------------------------------------------------
+    #     select source and load
+
+    # clear stdout and stderr
+    __ = capsys.readouterr()
+
+    my_widget.source_list.clearSelection()
+    my_widget.source_btn.click()
+
+    captured = capsys.readouterr()
+    assert captured.out == 'No source(s) selected.\n'
+
+    my_widget.source_list.setCurrentIndex(my_widget.source_list.indexFromItem(my_widget.source_list.item(0)))
+    my_widget.source_btn.click()
+
+    assert my_widget.mobie.imported_dataset == my_widget.mobie.dataset
+    assert my_widget.mobie.display ==  my_widget.mobie.displays[0]
+
+    assert my_widget.source_list.item(0).text() in viewer.layers
+
+    layer = viewer.layers[my_widget.source_list.item(0).text()]
+
+    assert type(layer) == layers.image.image.Image
+    assert layer.data.shape == im_shape
+
+    for key in layer.metadata['MoBIE'].keys():
+        if key in ['dataset',]:
+            assert layer.metadata['MoBIE'][key] == my_widget.mobie.__dict__['imported_' + key]
+        else:
+            assert layer.metadata['MoBIE'][key] == my_widget.mobie.__dict__[key]
 
 
 

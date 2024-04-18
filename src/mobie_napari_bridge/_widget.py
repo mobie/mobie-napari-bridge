@@ -177,7 +177,7 @@ class LoadSource(QWidget):
         self.v_dropdown.addItems(self.mobie.views)
 
     def _v_select(self, view_name):
-        if view_name not in self.mobie.dataset['views'].keys():
+        if view_name not in self.mobie.dataset['views'].keys():  # pragma: no cover
             return
 
         self.mobie.sources = []
@@ -229,7 +229,7 @@ class LoadSource(QWidget):
 
             sel_sources.append(thissource)
 
-            if thissource not in self.mobie.dataset['sources'].keys():
+            if thissource not in self.mobie.dataset['sources'].keys():  # pragma: no cover
                 raise ValueError('Wrong dataset!')
 
             s_meta = self.mobie.dataset['sources'][thissource]
